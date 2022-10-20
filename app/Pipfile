@@ -5,14 +5,13 @@ name = "pypi"
 
 [packages]
 fastapi = "*"
-requests = "*"
 pydantic = "*"
 uvicorn = "*"
-pika = "*"
 boto3 = "*"
 jwt = "*"
 aio-pika = "*"
-aws = "*"
+python-decouple = "*"
+python-jose = "*"
 
 [dev-packages]
 black = "*"

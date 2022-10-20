@@ -15,6 +15,6 @@ RUN apt-get update \
 COPY Pipfile Pipfile.lock ./
 RUN pipenv install --deploy --system --ignore-pipfile
 
-COPY . .
+COPY .. .
 
 RUN ["chmod", "777", "entrypoint.sh"]

@@ -8,15 +8,6 @@ from service import methods_dict
 class PikaClient:
     def __init__(self):
         self.publish_queue_name = "statistics"
-        self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(
-                host="rabbitmq", heartbeat=600, blocked_connection_timeout=300
-            )
-        )
-        self.channel = self.connection.channel()
-        self.publish_queue = self.channel.queue_declare(queue=self.publish_queue_name)
-        self.callback_queue = self.publish_queue.method.queue
-        self.response = None
 
     @classmethod
     def handle_incoming_message(cls, body: dict):

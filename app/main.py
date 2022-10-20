@@ -1,8 +1,9 @@
 import asyncio
 
 from fastapi import FastAPI
-from consumer import PikaClient
-from router import router
+
+from app.services.consumer import PikaClient
+from app.services.router import router
 
 
 class App(FastAPI):
