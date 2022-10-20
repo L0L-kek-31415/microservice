@@ -1,36 +1,42 @@
 import json
 
 import pika
-from aio_pika import connect_robust
+import aio_pika
+from service import methods_dict
 
 
 class PikaClient:
-
-    def __init__(self, process_callable):
+    def __init__(self):
         self.publish_queue_name = "statistics"
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host="rabbitmq")
+            pika.ConnectionParameters(
+                host="rabbitmq", heartbeat=600, blocked_connection_timeout=300
+            )
         )
         self.channel = self.connection.channel()
         self.publish_queue = self.channel.queue_declare(queue=self.publish_queue_name)
         self.callback_queue = self.publish_queue.method.queue
         self.response = None
-        self.process_callable = process_callable
+
+    @classmethod
+    def handle_incoming_message(cls, body: dict):
+
+        methods_dict[body["method"]](body=body)
 
     async def consume(self, loop):
         """Setup message listener with the current running loop"""
-        connection = await connect_robust(host="rabbitmq",
-                                          port=5672,
-                                          loop=loop)
+        connection = await aio_pika.connect_robust(
+            host="rabbitmq", port=5672, loop=loop
+        )
         channel = await connection.channel()
-        queue = await channel.declare_queue("statistics")
-        await queue.consume(self.process_incoming_message, no_ack=False)
+        await channel.set_qos(prefetch_count=100)
+        queue = await channel.declare_queue(self.publish_queue_name)
+        await queue.consume(self.process_incoming_message)
         return connection
 
-    async def process_incoming_message(self, message):
+    @staticmethod
+    async def process_incoming_message(message) -> None:
         """Processing incoming message from RabbitMQ"""
-        message.ack()
-        body = message.body
-        if body:
-            self.process_callable(json.loads(body))
-
+        async with message.process():
+            print(message.body)
+            PikaClient.handle_incoming_message(json.loads(message.body))
